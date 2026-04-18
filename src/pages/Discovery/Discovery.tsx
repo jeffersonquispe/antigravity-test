@@ -54,7 +54,7 @@ export const Discovery: React.FC = () => {
           setCurrentIndex(prev => prev + 1);
        }
     }
-  }, [currentMovie, dispatch, currentIndex, movies.length, hasMore, loadMore]);
+  }, [currentMovie, dispatch, currentIndex, movies.length, hasMore, loadMore, recordSwipe]);
 
   if (loading && movies.length === 0) {
     return (
