@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { MovieProvider } from './context/movies/MovieContext';
-import { Discovery } from './pages/Discovery/Discovery';
+
+// Importación perezosa para aplicar Code Splitting (dividir el código JS)
+const Discovery = lazy(() => import('./pages/Discovery/Discovery').then(module => ({ default: module.Discovery })));
 
 const App: React.FC = () => {
   return (
@@ -12,7 +14,15 @@ const App: React.FC = () => {
           </h1>
         </header>
         <main className="flex justify-center items-center h-screen pt-20">
-          <Discovery />
+          {/* El fallback se muestra mientras se descarga el chunk Javascript de Discovery */}
+          <Suspense fallback={
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-indigo-400 font-medium">Cargando películas...</p>
+            </div>
+          }>
+            <Discovery />
+          </Suspense>
         </main>
       </div>
     </MovieProvider>

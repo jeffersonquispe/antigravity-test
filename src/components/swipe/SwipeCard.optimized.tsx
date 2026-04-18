@@ -26,7 +26,14 @@ const ROTATION_FACTOR = 0.05;
 // ==========================================
 // COMPONENTE PRINCIPAL
 // ==========================================
-export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
+
+// [POR QUÉ SE MEMOIZA]: React.memo() evalúa superficialmente (shallow compare) los props
+// 'movie' y 'onSwipe'. Si ninguno de los dos cambia su referencia en memoria, omite por
+// completo los procesos de reconciliación de DOM virtual y repintado de esto componente.
+// Evita que SwipeCard se re-renderice si el componente padre (Discovery) sufre cambios
+// de estado irrelevantes (ej: se actualiza el context del historial, pero la película en 
+// pantalla sigue siendo la misma).
+const SwipeCardComponent: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
   // Refs para manipular el DOM sin disparar re-renders de React
   const cardRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef<number>(0);
@@ -46,7 +53,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
           observer.disconnect(); // Dejar de observar una vez que se hace visible
         }
       },
-      { rootMargin: '100px' } // Pre-carga antes de que se vea completamente en pantalla
+      { rootMargin: '100px' } 
     );
 
     if (imgObserverRef.current) {
@@ -56,20 +63,15 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Preparar URLs dinámicas (Asumiendo que posterUrl viene con w500)
   const imgUrl300 = movie.posterUrl.replace('/w500/', '/w300/');
   const imgUrlTiny = movie.posterUrl.replace('/w500/', '/w92/');
 
   // Referencias para el seguimiento de la posición inicial sin re-renders
   const startXRef = useRef<number>(0);
 
-  // -- Gestores de Eventos Pointer (Soporta Mouse y Touch al mismo tiempo) --
-  
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    // Captura el puntero para seguir rastreando el movimiento aunque el ratón salga del elemento
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setIsDragging(true);
-    // Guárdamos la coordenada X inicial descontando cualquier desviación actual
     startXRef.current = e.clientX - offsetRef.current;
   };
 
@@ -78,13 +80,11 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
     const currentOffset = e.clientX - startXRef.current;
     offsetRef.current = currentOffset;
 
-    // Actualización directa del DOM (Alto Rendimiento)
     if (cardRef.current) {
       const rotation = currentOffset * ROTATION_FACTOR;
       cardRef.current.style.transform = `translate3d(${currentOffset}px, 0, 0) rotate(${rotation}deg)`;
     }
 
-    // Actualizamos el estado de UI solo cuando cambia el umbral (poca frecuencia)
     if (currentOffset > SWIPE_THRESHOLD && status !== 'like') setStatus('like');
     else if (currentOffset < -SWIPE_THRESHOLD && status !== 'dislike') setStatus('dislike');
     else if (Math.abs(currentOffset) <= SWIPE_THRESHOLD && status !== 'none') setStatus('none');
@@ -94,16 +94,13 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
     if (!isDragging) return;
     setIsDragging(false);
     
-    // Libera la captura del puntero
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
 
-    // Detección de umbral
     if (offsetRef.current > SWIPE_THRESHOLD) {
       onSwipe('like');
     } else if (offsetRef.current < -SWIPE_THRESHOLD) {
       onSwipe('dislike');
     } else {
-      // Retorno a la posición base si no superó el umbral
       offsetRef.current = 0;
       setStatus('none');
       if (cardRef.current) {
@@ -112,8 +109,6 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
     }
   };
 
-  // -- Flexibilidad y Accesibilidad (Fallback para teclado) --
-  
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'ArrowRight') {
       onSwipe('like');
@@ -122,9 +117,6 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
     }
   };
 
-  // -- Lógica de Presentación Dinámica --
-  
-  // Condicionales visuales
   const isLiking = status === 'like';
   const isDisliking = status === 'dislike';
 
@@ -142,12 +134,10 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp} // Manejo seguro de finalizaciones abruptas
+      onPointerCancel={handlePointerUp} 
       onKeyDown={handleKeyDown}
     >
-      {/* Contenedor Visual: Póster (Placeholder gris previene CLS al tener w y h 100% de la tarjeta) */}
       <div className="absolute inset-0 w-full h-full bg-gray-800 flex items-center justify-center overflow-hidden">
-        {/* [NEW] Placeholder pequeño con blur fuerte mientras carga */}
         {isVisible && !isLoaded && (
           <img
             src={imgUrlTiny}
@@ -157,7 +147,6 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
           />
         )}
         
-        {/* [NEW] Imagen final cargada nativamente usando srcSet y loading="lazy" */}
         <img 
           ref={imgObserverRef}
           src={isVisible ? movie.posterUrl : ''} 
@@ -173,7 +162,6 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
         />
       </div>
       
-      {/* Indicadores visuales de Like/Dislike */}
       {isLiking && (
         <div className="absolute top-6 left-6 border-4 border-green-500 text-green-500 text-3xl font-bold uppercase py-1 px-4 rounded transform -rotate-12 bg-black bg-opacity-30">
           Like
@@ -185,7 +173,6 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
         </div>
       )}
 
-      {/* Gradiente estilo viñeta para asegurar legibilidad del texto */}
       <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent pt-16 pb-6 px-6 pointer-events-none">
         <h2 className="text-white text-2xl font-bold leading-tight truncate">
           {movie.title}
@@ -201,31 +188,16 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
   );
 };
 
-// ==========================================
-// EJEMPLO DE USO (Comentado)
-// ==========================================
-/*
-import React from 'react';
-import { SwipeCard } from './SwipeCard';
-
-export const DiscoveryPanel = () => {
-  const sampleMovie = {
-    id: 'm1',
-    title: 'Dune: Part Two',
-    year: 2024,
-    rating: 8.8,
-    posterUrl: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2JGjjc91p.jpg'
-  };
-
-  const handleSwipe = (direction: 'like' | 'dislike') => {
-    console.log(`Movie swiped ${direction}`);
-    // Aquí irían logicas del reducer para remover la carta actual y traer la siguiente
-  };
-
+// [POR QUÉ SE MEMOIZA]: Usamos una función personaliza de comparación en vez de
+// la igualdad estricta por defecto. Como el objeto 'movie' se regenera ocasionalmente 
+// (creando una nueva referencia en memoria), validamos especificamente el 'movie.id'.
+// Si el ID es el mismo, nos saltamos el renderizado porque visualmente representa 
+// la misma película y su poster.
+export const SwipeCard = React.memo(SwipeCardComponent, (prevProps, nextProps) => {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <SwipeCard movie={sampleMovie} onSwipe={handleSwipe} />
-    </div>
+    prevProps.movie.id === nextProps.movie.id &&
+    // Importante: también compramos el prop onSwipe, el cual debe estar memoizado 
+    // en con useCallback() en el padre (Discovery.tsx).
+    prevProps.onSwipe === nextProps.onSwipe
   );
-};
-*/
+});
