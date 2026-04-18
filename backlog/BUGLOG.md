@@ -50,4 +50,16 @@ Este archivo registra los errores detectados durante el desarrollo, su causa ra�
 
 ---
 
+| Campo | Detalles |
+| :--- | :--- |
+| **ID del bug** | BUG-005 |
+| **Archivo afectado** | [package.json](file:///c:/Users/Jeff/Desktop/Curso%20antigravity/sesion%207%20-%20Copy/package.json) |
+| **Síntoma** | Error `Permission denied` (exit 126) persiste en Vercel incluso usando `npx`. |
+| **Causa raíz** | Los binarios de `tsc` no son ejecutables en el entorno Linux de Vercel y `npx` no resuelve el problema de permisos de fondo. |
+| **Fix aplicado** | Desacoplamiento de `tsc` del comando de `build`. Ahora el `build` solo ejecuta `vite build` y el chequeo de tipos se traslada al pipeline de CI (`npm run type-check`). Se añadió `postinstall` con `chmod` como refuerzo. |
+| **Test de regresión** | Compilación exitosa en Vercel y validación de tipos exitosa en GitHub Actions. |
+| **Tipo de error agentic** | Falta de restricciones: Se intentó solucionar un error de permisos ambientales con una herramienta que seguía dependiendo de los mismos permisos. |
+
+---
+
 <!-- Añadir nuevos bugs arriba de esta línea usando el mismo formato -->
