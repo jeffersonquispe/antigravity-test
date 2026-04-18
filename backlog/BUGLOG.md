@@ -38,4 +38,16 @@ Este archivo registra los errores detectados durante el desarrollo, su causa ra�
 
 ---
 
+| Campo | Detalles |
+| :--- | :--- |
+| **ID del bug** | BUG-004 |
+| **Archivo afectado** | [package.json](file:///c:/Users/Jeff/Desktop/Curso%20antigravity/sesion%207%20-%20Copy/package.json) |
+| **Síntoma** | Error `Permission denied` (exit 126) al ejecutar `tsc` durante el build en entornos remotos (Vercel). |
+| **Causa raíz** | Problemas de permisos de ejecución en los binarios de `node_modules/.bin` dentro del entorno Linux de despliegue. |
+| **Fix aplicado** | Uso de `npx` explícito para invocar `tsc` y `vite` en el script de build (`npx tsc && npx vite build`). |
+| **Test de regresión** | Compilación exitosa en la pipeline de CI y en el entorno de despliegue. |
+| **Tipo de error agentic** | Falta de restricciones: Se asumió interoperabilidad total de la ejecución de binarios entre Windows y Linux sin usar wrappers seguros como `npx`. |
+
+---
+
 <!-- Añadir nuevos bugs arriba de esta línea usando el mismo formato -->
