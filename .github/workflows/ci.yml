@@ -70,6 +70,9 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Verificar Tipados (TypeScript)
+        run: npm run type-check
+
       - name: Compilar proyecto (Vite)
         run: npm run build
 
